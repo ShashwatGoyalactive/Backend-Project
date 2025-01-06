@@ -22,10 +22,17 @@ app.use(express.urlencoded({
     extended: true,
     limit: "16kb"
 }));
-
 // configuration for storing files and folders in public folder for public access 
 app.use(express.static("public"))
-
+// for configuration of cookies 
 app.use(cookieParser())
+
+
+
+// routes imports 
+import userRouter from "./routes/user.routes.js"
+
+// routes declaration 
+app.use("/api/v1/users", userRouter)
 
 export { app };
