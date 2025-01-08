@@ -3,7 +3,7 @@
 import {v2 as cloudinary} from "cloudinary"
 import fs from "fs" //file system of nodejs 
 
-import { v2 as cloudinary } from 'cloudinary';
+
 
 
     // Configuration
@@ -22,6 +22,8 @@ import { v2 as cloudinary } from 'cloudinary';
         })
         // file has been uploaded successfully 
         console.log("file is uploaded on cloudinary" , response.url);
+        console.log(response);
+        
         return response;
     } catch (error) {
         // file is in server but not uploaded on cloudinary so we should remove it from the server for maintaining a clean code in a synchronouns way 
