@@ -20,7 +20,8 @@ const registerUser = asyncHandler(async (req, res) => {
     // return response 
 
     const {fullName, email, username, password } = req.body
-    console.log("email: " , email);
+    // console.log("req.body ===> " , req.body)
+    // console.log("email: " , email);
     
     if(fullName === ""){
         throw new ApiError(400, "full name is required")
@@ -32,7 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // user model mein check kar lenge ki user exist karta hai ya nahi 
- const existedUser =    User.findOne({
+ const existedUser = await    User.findOne({
         $or: [{ username } , { email }]
     })
     console.log(existedUser);
@@ -42,12 +43,17 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // images and avatar (files ka access hame middleware deta hai (basically request mein kuch fields add kar deta hai ))
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-        console.log(avatar);
+  const avatarLocalPath = req.files?.avatar?.[0].path;
+        // console.log(avatarLocalPath);
+        // console.log("req.files ==>" , req.files);
         
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
-    console.log(coverImageLocalPath);
+//   const coverImageLocalPath = req.files?.coverImage?.[0].path;
+//     console.log(coverImageLocalPath);
 
+let coverImageLocalPath;
+if(req.files && Array.isArray(req.files.coverImage) && req.files.length > 0){
+    coverImageLocalPath = req.files.coverImage[0];
+}
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is required")
     }
@@ -85,7 +91,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 })
 
-export {registerUser,}
+export {registerUser}
 
 
 
