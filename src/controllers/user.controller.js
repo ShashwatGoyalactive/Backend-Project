@@ -4,6 +4,8 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { User } from './../models/user.model';
+
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -256,7 +258,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         }
 
         // modifying the cookie by regenerating the tokens 
-        const options = { 
+        const options = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production", // Secure in production only
             sameSite: "strict", // Recommended for CSRF protection
@@ -273,14 +275,148 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(200, { accessToken, newRefreshToken }, "Access token refreshed")
             )
-     
- } catch (error) {
-    throw new ApiError(401, error?.message || "Invaid refresh Token")
-    
-} })
+
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invaid refresh Token")
+
+    }
+})
 
 
-export { registerUser, loginUser, logOutUser ,refreshAccessToken }
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body
+    // agar user password change kar paa raha hai to iska matlab login hai 
+    // auth middleware se tab usme req.user ki field bhi add hui hogi to usse hamko user ka access mil jaayega
+
+    const user = await User.findById(req.user?._id)
+
+    // check old password
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(400, "Invalid Old password")
+    }
+    // user password
+    user.password = new Password
+    // save password
+    await user.save({ validateBeforeSave: false })
+
+    return res.status(200)
+        .json(new ApiResponse(200, {}, "Password updated"))
+
+})
+
+const currentUser = asyncHandler(async (req, res) => {
+    // if the user is logged in 
+
+    return res.status(200)
+        .json(new ApiResponse(200, req.user, "current user fetched successfully"))
+})
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body
+
+    if (!fullName || !email) {
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const user = await user.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullName,
+                email
+            }
+        },
+        { new: true }
+    ).select("-password")
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user,
+                "Account details updated successfully1"
+            ))
+})
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    // note this method is just a controller for updating the avatar 
+    // before this in the routing we have to define two middleware - 1. check if user is logged in , 2. multer middleware for accessing the avatar file 
+    const avatarLocalPath = req.file?.path
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing")
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        { new: true }
+    ).select("-password")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            user,
+            "Avatar updated successfully!"
+        ))
+})
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+    // note this method is just a controller for updating the avatar 
+    // before this in the routing we have to define two middleware - 1. check if user is logged in , 2. multer middleware for accessing the avatar file 
+    const coverImageLocalPath = req.file?.path
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover Image file is missing")
+    }
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!coverImage.url) {
+        throw new ApiError(400, "Error while uploading on cover image")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        { new: true }
+    ).select("-password")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            user,
+            "Cover image updated successfully!"
+        ))
+})
+
+export {
+    registerUser,
+    loginUser,
+    logOutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    currentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage
+}
 
 
 
