@@ -236,7 +236,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     // acquiring the Refresh Token of the user trying to register (from user cookie) 
     const inComingRefreshToken = req.cookie.refreshToken || req.body.refreshToken;
 
-    if (inComingRefreshToken) {
+    if (!inComingRefreshToken) {
         throw new ApiError(401, "unauthorized request")
     }
     // decoding the token using the process environment refresh Token secret 
